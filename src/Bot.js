@@ -17,21 +17,19 @@ export default class Bot extends ActivityHandler {
 
       console.log(activity);
 
+      const attachments = (activity.attachments || []).map(({ content, contentType, contentUrl }) => ({
+        ...content ? { content } : {},
+        contentType,
+        ...contentUrl ? { contentUrl } : {}
+      }));
+
       await context.sendActivity({
-        attachments: [{
-          content: {
-            activity: {
-              ...(activity.text ? { text: activity.text } : {}),
-              ...(activity.value ? { value: activity.value } : {})
-            },
-            ...(activity.attachments ? {
-              attachments: activity.attachments.map(attachment => ({
-                contentType: attachment.contentType
-              }))
-            } : {})
-          },
-          contentType: 'application/json'
-        }]
+        attachments,
+        channelData: {
+          originalActivity: activity
+        },
+        text: activity.text,
+        value: activity.value
       });
 
       await next();
@@ -39,7 +37,12 @@ export default class Bot extends ActivityHandler {
 
     this.onUnrecognizedActivityType(async (context, next) => {
       if (context.activity.type === 'typing') {
-        await context.sendActivity({ type: 'typing' });
+        await context.sendActivity({
+          channelData: {
+            originalActivity: context.activity
+          },
+          type: 'typing'
+        });
       }
 
       await next();
