@@ -70,7 +70,23 @@ function main() {
     res.send('OK');
   });
 
-  server.get('/public/*', restify.plugins.serveStaticFiles(join(__dirname, '../public')));
+  server.opts('/public/**/*', (req, res) => {
+    const accessControlRequestHeaders = req.header('access-control-request-headers');
+    const accessControlRequestMethods = (req.header('access-control-request-method') || '').split(/[,\s]/iu).filter(s => s.trim());
+    const origin = req.header('origin');
+
+    if (~accessControlRequestMethods.indexOf('GET')) {
+      accessControlRequestHeaders && res.header('access-control-allow-headers', accessControlRequestHeaders);
+      res.header('access-control-allow-origin', origin || '*');
+      res.header('access-control-allow-methods', 'GET');
+      res.end();
+    } else {
+      res.statusCode(403);
+      res.end();
+    }
+  });
+
+  server.get('/public/**/*', restify.plugins.serveStaticFiles(join(__dirname, '../public')));
 
   const bot = new Bot();
   const legacyAdapter = new BotFrameworkAdapter(ADAPTER_SETTINGS);
