@@ -3,6 +3,7 @@ import 'dotenv/config';
 
 import { BotFrameworkAdapter } from 'botbuilder';
 import { BotFrameworkStreamingAdapter } from 'botbuilder-streaming-extensions';
+import { join } from 'path';
 import { MicrosoftAppCredentials } from 'botframework-connector';
 import prettyMs from 'pretty-ms';
 import restify from 'restify';
@@ -68,6 +69,8 @@ function main() {
     res.set('Content-Type', 'text/plain');
     res.send('OK');
   });
+
+  server.get('/public/*', restify.plugins.serveStaticFiles(join(__dirname, '../public')));
 
   const bot = new Bot();
   const legacyAdapter = new BotFrameworkAdapter(ADAPTER_SETTINGS);
