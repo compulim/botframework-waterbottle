@@ -84,7 +84,7 @@ function main() {
   server.get('/token/directlinestreamingextensions', async (_, res) => {
     if (WEBSITE_HOSTNAME) {
       try {
-        res.json(await generateDirectLineToken(`https://${ WEBSITE_HOSTNAME }.azurewebsites.net/.bot/v3/directline`));
+        res.json(await generateDirectLineToken(`https://${ WEBSITE_HOSTNAME }/.bot/v3/directline`));
       } catch ({ message }) {
         res.status(500);
         res.json({ message });
