@@ -10,6 +10,7 @@ import restify from 'restify';
 
 import Bot from './Bot';
 import connectAdapterToProxy from './connectAdapterToProxy';
+import generateDirectLineToken from './generateDirectLineToken';
 
 // Create server
 const server = restify.createServer({ handleUpgrades: true });
@@ -20,7 +21,8 @@ const {
   MICROSOFT_APP_PASSWORD,
   OAUTH_ENDPOINT,
   OPENID_METADATA,
-  PORT = 3978
+  PORT = 3978,
+  WEBSITE_HOSTNAME = 'webchat-waterbottle'
 } = process.env;
 
 const ADAPTER_SETTINGS = {
@@ -68,6 +70,29 @@ function main() {
   server.get('/ready.txt', async (_, res) => {
     res.set('Content-Type', 'text/plain');
     res.send('OK');
+  });
+
+  server.get('/token/directline', async (_, res) => {
+    try {
+      res.json(await generateDirectLineToken());
+    } catch ({ message }) {
+      res.status(500);
+      res.json({ message });
+    }
+  });
+
+  server.get('/token/directlinestreamingextensions', async (_, res) => {
+    if (WEBSITE_HOSTNAME) {
+      try {
+        res.json(await generateDirectLineToken(`https://${ WEBSITE_HOSTNAME }.azurewebsites.net/.bot/v3/directline`));
+      } catch ({ message }) {
+        res.status(500);
+        res.json({ message });
+      }
+    } else {
+      res.status(500);
+      res.json({ message: 'Please specify WEBSITE_HOSTNAME environment variable.' });
+    }
   });
 
   server.opts('/public/**/*', (req, res) => {

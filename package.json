@@ -21,6 +21,7 @@
     "botframework-streaming-extensions": "^4.6.0-preview.76590",
     "delay": "^4.3.0",
     "dotenv": "^8.0.0",
+    "math-random": "^1.0.4",
     "node-fetch": "^2.6.0",
     "on-error-resume-next": "^1.1.0",
     "pretty-ms": "^5.0.0",
