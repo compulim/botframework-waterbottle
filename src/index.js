@@ -11,12 +11,15 @@ import restify from 'restify';
 import Bot from './Bot';
 import connectAdapterToProxy from './connectAdapterToProxy';
 import generateDirectLineToken from './generateDirectLineToken';
+import generateSpeechServicesToken from './generateSpeechServicesToken';
 
 // Create server
 const server = restify.createServer({ handleUpgrades: true });
 
 const {
   DIRECTLINE_EXTENSION_VERSION,
+  DIRECT_LINE_SPEECH_TOKEN,
+  DIRECT_LINE_TOKEN,
   MICROSOFT_APP_ID,
   MICROSOFT_APP_PASSWORD,
   OAUTH_ENDPOINT,
@@ -32,6 +35,12 @@ const ADAPTER_SETTINGS = {
   openIdMetadata: OPENID_METADATA
 };
 
+const TRUSTED_ORIGIN_PATTERNS = [
+  /^https?:\/\/localhost(:\d+)?$/,
+  /^https:\/\/compulim.github.io$/,
+  /^https:\/\/microsoft.github.io$/,
+];
+
 function main() {
   server.use(restify.plugins.queryParser());
 
@@ -44,6 +53,26 @@ function main() {
   MicrosoftAppCredentials.trustServiceUrl('https://token.ppe.botframework.com');
 
   const up = Date.now();
+
+  server.pre((req, res, next) => {
+    const origin = req.header('origin');
+
+    if (origin && !TRUSTED_ORIGIN_PATTERNS.some(pattern => pattern.test(origin))) {
+      res.status(403);
+      res.end();
+    }
+
+    res.header('access-control-allow-origin', origin);
+    res.header('access-control-allow-credentials', 'true');
+
+    const accessControlRequestHeaders = req.header('access-control-request-headers');
+    const accessControlRequestMethod = req.header('access-control-request-method');
+
+    accessControlRequestHeaders && res.header('access-control-allow-headers', accessControlRequestHeaders);
+    accessControlRequestMethod && res.header('access-control-allow-method', accessControlRequestMethod);
+
+    next();
+  });
 
   server.get('/', async (_, res) => {
     const message = `WaterBottle is up since ${ prettyMs(Date.now() - up) } ago.`;
@@ -74,7 +103,16 @@ function main() {
 
   server.get('/token/directline', async (_, res) => {
     try {
-      res.json(await generateDirectLineToken());
+      res.json(await generateDirectLineToken(DIRECT_LINE_TOKEN));
+    } catch ({ message }) {
+      res.status(500);
+      res.json({ message });
+    }
+  });
+
+  server.get('/token/directlinespeech', async (req, res) => {
+    try {
+      res.json(await generateDirectLineToken(DIRECT_LINE_SPEECH_TOKEN));
     } catch ({ message }) {
       res.status(500);
       res.json({ message });
@@ -84,7 +122,7 @@ function main() {
   server.get('/token/directlinestreamingextensions', async (_, res) => {
     if (WEBSITE_HOSTNAME) {
       try {
-        res.json(await generateDirectLineToken(`https://${ WEBSITE_HOSTNAME }/.bot/v3/directline`));
+        res.json(await generateDirectLineToken(DIRECT_LINE_TOKEN, `https://${ WEBSITE_HOSTNAME }/.bot/v3/directline`));
       } catch ({ message }) {
         res.status(500);
         res.json({ message });
@@ -92,6 +130,15 @@ function main() {
     } else {
       res.status(500);
       res.json({ message: 'Please specify WEBSITE_HOSTNAME environment variable.' });
+    }
+  });
+
+  server.get('/token/speechservices', async (req, res) => {
+    try {
+      res.json(await generateSpeechServicesToken());
+    } catch ({ message }) {
+      res.status(500);
+      res.json({ message });
     }
   });
 
@@ -130,6 +177,15 @@ function main() {
     console.log('Running with streaming extension running via proxy.');
     connectAdapterToProxy(streamingAdapter);
   }
+
+  server.get('/api/messages', (req, res) => {
+    if (req.isUpgradeRequest) {
+      streamingAdapter.connectWebSocket(req, res, {
+        appId: process.env.MICROSOFT_APP_ID,
+        appPassword: process.env.MICROSOFT_APP_PASSWORD,
+      });
+    }
+  });
 
   server.listen(PORT, () => console.log(`${ server.name } now listening to port ${ PORT }`));
 }

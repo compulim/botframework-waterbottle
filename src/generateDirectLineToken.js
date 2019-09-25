@@ -8,8 +8,8 @@ const {
 
 const DEFAULT_DOMAIN = 'https://directline.botframework.com/v3/directline';
 
-export default async function generateDirectLineToken(domain = DEFAULT_DOMAIN) {
-  if (!DIRECT_LINE_SECRET) {
+export default async function generateDirectLineToken(secret = DIRECT_LINE_SECRET, domain = DEFAULT_DOMAIN) {
+  if (!secret) {
     throw new Error('Please specify DIRECT_LINE_SECRET environment variable.');
   }
 
@@ -25,18 +25,18 @@ export default async function generateDirectLineToken(domain = DEFAULT_DOMAIN) {
     method: 'POST'
   });
 
-  if (res.status === 200) {
-    const json = await res.json();
-
-    if ('error' in json) {
-      throw new Error(`Direct Line service responded with ${ JSON.stringify(json.error) } while generating a new token`);
-    } else {
-      return {
-        userId,
-        ...json
-      };
-    }
-  } else {
+  if (!res.ok) {
     throw new Error(`Direct Line service returned ${ res.status } while generating a new token`);
   }
+
+  const json = await res.json();
+
+  if ('error' in json) {
+    throw new Error(`Direct Line service responded with ${ JSON.stringify(json.error) } while generating a new token`);
+  }
+
+  return {
+    userId,
+    ...json
+  };
 }
