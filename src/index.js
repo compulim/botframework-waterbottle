@@ -55,21 +55,24 @@ function main() {
   const up = Date.now();
 
   server.pre((req, res, next) => {
-    const origin = req.header('origin');
+    // CORS is also served by Restify serveStatic plugin
+    if (!/^\/public(\/|$)/.test(req.url)) {
+      const origin = req.header('origin');
 
-    if (origin && !TRUSTED_ORIGIN_PATTERNS.some(pattern => pattern.test(origin))) {
-      res.status(403);
-      res.end();
+      if (origin && !TRUSTED_ORIGIN_PATTERNS.some(pattern => pattern.test(origin))) {
+        res.status(403);
+        res.end();
+      }
+
+      res.header('access-control-allow-origin', origin);
+      res.header('access-control-allow-credentials', 'true');
+
+      const accessControlRequestHeaders = req.header('access-control-request-headers');
+      const accessControlRequestMethod = req.header('access-control-request-method');
+
+      accessControlRequestHeaders && res.header('access-control-allow-headers', accessControlRequestHeaders);
+      accessControlRequestMethod && res.header('access-control-allow-methods', accessControlRequestMethod || 'GET');
     }
-
-    res.header('access-control-allow-origin', origin);
-    res.header('access-control-allow-credentials', 'true');
-
-    const accessControlRequestHeaders = req.header('access-control-request-headers');
-    const accessControlRequestMethod = req.header('access-control-request-method');
-
-    accessControlRequestHeaders && res.header('access-control-allow-headers', accessControlRequestHeaders);
-    accessControlRequestMethod && res.header('access-control-allow-method', accessControlRequestMethod);
 
     next();
   });
