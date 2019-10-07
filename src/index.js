@@ -13,6 +13,8 @@ import connectAdapterToProxy from './connectAdapterToProxy';
 import generateDirectLineToken from './generateDirectLineToken';
 import generateSpeechServicesToken from './generateSpeechServicesToken';
 
+import packageJSON from '../package.json';
+
 // Create server
 const server = restify.createServer({ handleUpgrades: true });
 
@@ -89,6 +91,7 @@ function main() {
         separator
       ],
       computer: {
+        dependencies: packageJSON.dependencies,
         up
       }
     }, null, 2));
