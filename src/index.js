@@ -19,7 +19,8 @@ import packageJSON from '../package.json';
 const server = restify.createServer({ handleUpgrades: true });
 
 const {
-  DIRECTLINE_EXTENSION_VERSION,
+  DirectLineExtensionKey: DIRECT_LINE_EXTENSION_KEY,
+  // DIRECTLINE_EXTENSION_VERSION,
   DIRECT_LINE_SPEECH_TOKEN,
   DIRECT_LINE_TOKEN,
   MICROSOFT_APP_ID,
@@ -176,7 +177,8 @@ function main() {
   const streamingAdapter = new BotFrameworkStreamingAdapter(bot);
 
   // Checks if running under Azure
-  if (DIRECTLINE_EXTENSION_VERSION) {
+  if (DIRECT_LINE_EXTENSION_KEY) {
+  // if (DIRECTLINE_EXTENSION_VERSION) {
     console.log('Running with streaming extension running via Direct Line ASE.');
     streamingAdapter.connectNamedPipe();
   } else {
