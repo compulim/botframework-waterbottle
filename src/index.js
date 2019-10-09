@@ -44,7 +44,9 @@ const TRUSTED_ORIGIN_PATTERNS = [
   /^https:\/\/microsoft.github.io$/,
 ];
 
-function main() {
+let streamingExtensionsType = false;
+
+async function main() {
   server.use(restify.plugins.queryParser());
 
   MicrosoftAppCredentials.trustServiceUrl('https://api.scratch.botframework.com');
@@ -93,6 +95,7 @@ function main() {
       ],
       computer: {
         dependencies: packageJSON.dependencies,
+        streamingExtensionsType,
         up
       }
     }, null, 2));
@@ -169,23 +172,13 @@ function main() {
 
   const bot = new Bot();
   const legacyAdapter = new BotFrameworkAdapter(ADAPTER_SETTINGS);
+  const streamingAdapter = new BotFrameworkStreamingAdapter(bot);
 
   server.post('/api/messages', (req, res) => {
     legacyAdapter.processActivity(req, res, context => bot.run(context));
   });
 
-  const streamingAdapter = new BotFrameworkStreamingAdapter(bot);
-
-  // Checks if running under Azure
-  if (DIRECT_LINE_EXTENSION_KEY) {
-  // if (DIRECTLINE_EXTENSION_VERSION) {
-    console.log('Running with streaming extension running via Direct Line ASE.');
-    streamingAdapter.connectNamedPipe();
-  } else {
-    console.log('Running with streaming extension running via proxy.');
-    connectAdapterToProxy(streamingAdapter);
-  }
-
+  // This endpoint is for Direct Line Speech channel
   server.get('/api/messages', (req, res) => {
     if (req.isUpgradeRequest) {
       streamingAdapter.connectWebSocket(req, res, {
@@ -195,7 +188,19 @@ function main() {
     }
   });
 
+  // Checks if running under Azure
+  if (DIRECT_LINE_EXTENSION_KEY) {
+  // if (DIRECTLINE_EXTENSION_VERSION) {
+    console.log('Running with streaming extension running via Direct Line ASE.');
+    await streamingAdapter.connectNamedPipe();
+    streamingExtensionsType = 'named pipe';
+  } else {
+    console.log('Running with streaming extension running via proxy.');
+    connectAdapterToProxy(streamingAdapter);
+    streamingExtensionsType = 'web socket to proxy';
+  }
+
   server.listen(PORT, () => console.log(`${ server.name } now listening to port ${ PORT }`));
 }
 
-main();
+main().catch(err => console.log(err));
