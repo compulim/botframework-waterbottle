@@ -180,9 +180,9 @@ async function main() {
 
   // This endpoint is for Direct Line Speech channel
   server.get('/api/messages', (req, res) => {
-    console.log(`GET /api/messages(isUpgradeRequest=${ req.isUpgradeRequest }`);
+    console.log(`GET /api/messages(isUpgradeRequest=${ req.isUpgradeRequest() })`);
 
-    if (req.isUpgradeRequest) {
+    if (req.isUpgradeRequest()) {
       streamingAdapter.connectWebSocket(req, res, {
         appId: process.env.MICROSOFT_APP_ID,
         appPassword: process.env.MICROSOFT_APP_PASSWORD,
