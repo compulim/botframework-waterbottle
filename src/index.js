@@ -66,7 +66,8 @@ async function main() {
 
       if (origin && !TRUSTED_ORIGIN_PATTERNS.some(pattern => pattern.test(origin))) {
         res.status(403);
-        res.end();
+
+        return res.end();
       }
 
       res.header('access-control-allow-origin', origin);
