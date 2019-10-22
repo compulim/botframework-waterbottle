@@ -34,6 +34,7 @@ const {
 const ADAPTER_SETTINGS = {
   appId: MICROSOFT_APP_ID,
   appPassword: MICROSOFT_APP_PASSWORD,
+  enableWebSockets: true,
   oAuthEndpoint: OAUTH_ENDPOINT,
   openIdMetadata: OPENID_METADATA
 };
