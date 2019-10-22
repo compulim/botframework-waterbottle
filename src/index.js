@@ -192,7 +192,7 @@ async function main() {
   if (DIRECT_LINE_EXTENSION_KEY) {
   // if (DIRECTLINE_EXTENSION_VERSION) {
     console.log('Running with streaming extension running via Direct Line ASE.');
-    await legacyAdapter.useNamedPipe(bot);
+    await legacyAdapter.useNamedPipe(undefined, bot);
     streamingExtensionsType = 'named pipe';
   } else {
     console.log('Running with streaming extension running via proxy.');
