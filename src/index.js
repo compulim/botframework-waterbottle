@@ -178,31 +178,32 @@ async function main() {
   server.get('/public/**/*', restify.plugins.serveStaticFiles(join(__dirname, '../public')));
 
   const bot = new Bot();
-  const legacyAdapter = new BotFrameworkAdapter(ADAPTER_SETTINGS);
+  const adapter = new BotFrameworkAdapter(ADAPTER_SETTINGS);
   // const streamingAdapter = new BotFrameworkStreamingAdapter(bot);
 
   server.post('/api/messages', (req, res) => {
-    legacyAdapter.processActivity(req, res, context => bot.run(context));
+    adapter.processActivity(req, res, context => bot.run(context));
   });
 
   // This endpoint is for Direct Line Speech channel
   server.get('/api/messages', (req, res) => {
     console.log(`GET /api/messages(isUpgradeRequest=${ req.isUpgradeRequest() })`);
 
-    if (req.isUpgradeRequest()) {
-      legacyAdapter.useWebSocket(req, res, bot);
-    }
+    // if (req.isUpgradeRequest()) {
+    //   adapter.useWebSocket(req, res, bot);
+    // }
+
+    adapter.processActivity(req, res, context => bot.run(context));
   });
 
   // Checks if running under Azure
   if (DIRECT_LINE_EXTENSION_KEY) {
-  // if (DIRECTLINE_EXTENSION_VERSION) {
     console.log('Running with streaming extension running via Direct Line ASE.');
-    await legacyAdapter.useNamedPipe(undefined, bot);
+    await adapter.useNamedPipe(undefined, bot);
     streamingExtensionsType = 'named pipe';
   } else {
     console.log('Running with streaming extension running via proxy.');
-    connectAdapterToProxy(legacyAdapter);
+    connectAdapterToProxy(adapter);
     streamingExtensionsType = 'web socket to proxy';
   }
 
