@@ -2,7 +2,7 @@ import '@babel/polyfill';
 import 'dotenv/config';
 
 import { BotFrameworkAdapter } from 'botbuilder';
-import { BotFrameworkStreamingAdapter } from 'botbuilder-streaming-extensions';
+// import { BotFrameworkStreamingAdapter } from 'botbuilder-streaming-extensions';
 import { join } from 'path';
 import { MicrosoftAppCredentials } from 'botframework-connector';
 import prettyMs from 'pretty-ms';
@@ -173,7 +173,7 @@ async function main() {
 
   const bot = new Bot();
   const legacyAdapter = new BotFrameworkAdapter(ADAPTER_SETTINGS);
-  const streamingAdapter = new BotFrameworkStreamingAdapter(bot);
+  // const streamingAdapter = new BotFrameworkStreamingAdapter(bot);
 
   server.post('/api/messages', (req, res) => {
     legacyAdapter.processActivity(req, res, context => bot.run(context));
@@ -184,10 +184,7 @@ async function main() {
     console.log(`GET /api/messages(isUpgradeRequest=${ req.isUpgradeRequest() })`);
 
     if (req.isUpgradeRequest()) {
-      streamingAdapter.connectWebSocket(req, res, {
-        appId: process.env.MICROSOFT_APP_ID,
-        appPassword: process.env.MICROSOFT_APP_PASSWORD,
-      });
+      legacyAdapter.useWebSocket(req, res, bot);
     }
   });
 
@@ -195,11 +192,11 @@ async function main() {
   if (DIRECT_LINE_EXTENSION_KEY) {
   // if (DIRECTLINE_EXTENSION_VERSION) {
     console.log('Running with streaming extension running via Direct Line ASE.');
-    await streamingAdapter.connectNamedPipe();
+    await legacyAdapter.useNamedPipe(bot);
     streamingExtensionsType = 'named pipe';
   } else {
     console.log('Running with streaming extension running via proxy.');
-    connectAdapterToProxy(streamingAdapter);
+    connectAdapterToProxy(legacyAdapter);
     streamingExtensionsType = 'web socket to proxy';
   }
 

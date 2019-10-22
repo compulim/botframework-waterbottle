@@ -1,4 +1,4 @@
-import { NodeWebSocket } from 'botframework-streaming-extensions';
+import { NodeWebSocket } from 'botframework-streaming';
 import WebSocket from 'ws';
 
 export default function connectAdapterToProxy(adapter, urlString = 'https://webchat-mockbot-proxy.azurewebsites.net/') {
