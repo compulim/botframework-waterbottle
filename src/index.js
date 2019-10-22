@@ -170,6 +170,11 @@ async function main() {
     }
   });
 
+  server.get('/kill', () => {
+    console.log(`GET /kill, exiting`);
+    process.exit(0);
+  });
+
   server.get('/public/**/*', restify.plugins.serveStaticFiles(join(__dirname, '../public')));
 
   const bot = new Bot();
