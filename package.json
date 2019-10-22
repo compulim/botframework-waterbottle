@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
+  "engines": {
+    "node": ">=10.16.3"
+  },
   "private": true,
   "scripts": {
     "start": "node-dev --no-notify --respawn ."
