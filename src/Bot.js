@@ -1,5 +1,7 @@
 import { ActivityHandler } from 'botbuilder';
 
+const SSML_TEMPLATE = `<speak version="1.0" xml:lang="en-US"><voice xml:lang="en-US" name="Microsoft Server Speech Text to Speech Voice (en-US, JessaNeural)"><prosody pitch="+0%" rate="+0%" volume="+0%">$TEXT</prosody></voice></speak>`;
+
 export default class Bot extends ActivityHandler {
   constructor() {
     super();
@@ -28,6 +30,7 @@ export default class Bot extends ActivityHandler {
         channelData: {
           originalActivity: activity
         },
+        speak: SSML_TEMPLATE.replace('$TEXT', activity.text),
         text: activity.text,
         value: activity.value
       });
