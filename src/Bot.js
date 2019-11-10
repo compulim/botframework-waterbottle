@@ -30,7 +30,7 @@ export default class Bot extends ActivityHandler {
         channelData: {
           originalActivity: activity
         },
-        inputHint: 'expecting',
+        inputHint: 'expectingInput',
         speak: SSML_TEMPLATE.replace('$TEXT', activity.text),
         text: activity.text,
         value: activity.value
