@@ -30,6 +30,18 @@ export default class Bot extends ActivityHandler {
         channelData: {
           originalActivity: activity
         },
+        inputHint: 'expecting',
+        speak: SSML_TEMPLATE.replace('$TEXT', activity.text),
+        text: activity.text,
+        value: activity.value
+      });
+
+      await context.sendActivity({
+        attachments,
+        channelData: {
+          originalActivity: activity
+        },
+        inputHint: 'expecting',
         speak: SSML_TEMPLATE.replace('$TEXT', activity.text),
         text: activity.text,
         value: activity.value
