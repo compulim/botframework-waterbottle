@@ -31,7 +31,7 @@ export default class Bot extends ActivityHandler {
           originalActivity: activity
         },
         inputHint: 'expectingInput',
-        speak: SSML_TEMPLATE.replace('$TEXT', activity.text),
+        speak: activity.text && SSML_TEMPLATE.replace('$TEXT', activity.text),
         text: activity.text,
         value: activity.value
       });
