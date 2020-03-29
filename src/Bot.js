@@ -25,13 +25,15 @@ export default class Bot extends ActivityHandler {
         ...contentUrl ? { contentUrl } : {}
       }));
 
+      const shouldSpeak = !/^\/nospeak\s/.test(activity.text);
+
       await context.sendActivity({
         attachments,
         channelData: {
           originalActivity: activity
         },
         inputHint: 'expectingInput',
-        speak: activity.text && SSML_TEMPLATE.replace('$TEXT', activity.text),
+        speak: shouldSpeak ? SSML_TEMPLATE.replace('$TEXT', activity.text) : undefined,
         text: activity.text,
         value: activity.value
       });
