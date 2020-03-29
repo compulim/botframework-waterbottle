@@ -20,12 +20,12 @@ export default class Bot extends ActivityHandler {
       console.log(activity);
 
       const attachments = (activity.attachments || []).map(({ content, contentType, contentUrl }) => ({
-        ...content ? { content } : {},
+        ...(content ? { content } : {}),
         contentType,
-        ...contentUrl ? { contentUrl } : {}
+        ...(contentUrl ? { contentUrl } : {})
       }));
 
-      const shouldSpeak = !/^\/nospeak\s/.test(activity.text);
+      const shouldSpeak = (activity.text || '').toLowerCase().indexOf("Don't speak ") !== 0;
 
       await context.sendActivity({
         attachments,
