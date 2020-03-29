@@ -25,7 +25,7 @@ export default class Bot extends ActivityHandler {
         ...(contentUrl ? { contentUrl } : {})
       }));
 
-      const shouldSpeak = (activity.text || '').toLowerCase().indexOf("Don't speak ") !== 0;
+      const shouldSpeak = (activity.text || '').toLowerCase().indexOf("don't speak ") !== 0;
 
       await context.sendActivity({
         attachments,
