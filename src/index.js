@@ -1,213 +1,41 @@
-import '@babel/polyfill';
-import 'dotenv/config';
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
 
-import { BotFrameworkAdapter } from 'botbuilder';
-// import { BotFrameworkStreamingAdapter } from 'botbuilder-streaming-extensions';
+import dotenv from 'dotenv';
 import { join } from 'path';
-import { MicrosoftAppCredentials } from 'botframework-connector';
-import prettyMs from 'pretty-ms';
-import restify from 'restify';
 
-import Bot from './Bot';
-import connectAdapterToProxy from './connectAdapterToProxy';
-import generateDirectLineToken from './generateDirectLineToken';
-import generateSpeechServicesToken from './generateSpeechServicesToken';
+// Import required bot configuration.
+const ENV_FILE = join(__dirname, '../.env');
 
-import packageJSON from '../package.json';
+dotenv.config({ path: ENV_FILE });
 
-// Create server
-const server = restify.createServer({ handleUpgrades: true });
+import { createServer } from 'restify';
 
-const {
-  DirectLineExtensionKey: DIRECT_LINE_EXTENSION_KEY,
-  // DIRECTLINE_EXTENSION_VERSION,
-  DIRECT_LINE_SPEECH_TOKEN,
-  DIRECT_LINE_TOKEN,
-  MICROSOFT_APP_ID,
-  MICROSOFT_APP_PASSWORD,
-  OAUTH_ENDPOINT,
-  OPENID_METADATA,
-  PORT = 3978,
-  WEBSITE_HOSTNAME = 'webchat-waterbottle'
-} = process.env;
-
-const ADAPTER_SETTINGS = {
-  appId: MICROSOFT_APP_ID,
-  appPassword: MICROSOFT_APP_PASSWORD,
-  enableWebSockets: true,
-  oAuthEndpoint: OAUTH_ENDPOINT,
-  openIdMetadata: OPENID_METADATA
-};
-
-const TRUSTED_ORIGIN_PATTERNS = [
-  /^https?:\/\/localhost(:\d+)?$/,
-  /^https:\/\/compulim.github.io$/,
-  /^https:\/\/microsoft.github.io$/,
-];
-
-let streamingExtensionsType = false;
+import createBotFrameworkAdapter from './createBotFrameworkAdapter';
+import EchoBot from './bot';
+import setupAPI from './api/index';
 
 async function main() {
-  server.use(restify.plugins.queryParser());
+  // Create HTTP server
+  const server = createServer();
 
-  MicrosoftAppCredentials.trustServiceUrl('https://api.scratch.botframework.com');
-  MicrosoftAppCredentials.trustServiceUrl('https://state.scratch.botframework.com');
-  MicrosoftAppCredentials.trustServiceUrl('https://token.scratch.botframework.com');
-
-  MicrosoftAppCredentials.trustServiceUrl('https://api.ppe.botframework.com');
-  MicrosoftAppCredentials.trustServiceUrl('https://state.ppe.botframework.com');
-  MicrosoftAppCredentials.trustServiceUrl('https://token.ppe.botframework.com');
-
-  const up = Date.now();
-
-  server.pre((req, res, next) => {
-    // CORS is also served by Restify serveStatic plugin
-    if (!/^\/public(\/|$)/.test(req.url)) {
-      const origin = req.header('origin');
-
-      if (origin && !TRUSTED_ORIGIN_PATTERNS.some(pattern => pattern.test(origin))) {
-        res.status(403);
-
-        return res.end();
-      }
-
-      res.header('access-control-allow-origin', origin);
-      res.header('access-control-allow-credentials', 'true');
-
-      const accessControlRequestHeaders = req.header('access-control-request-headers');
-      const accessControlRequestMethod = req.header('access-control-request-method');
-
-      accessControlRequestHeaders && res.header('access-control-allow-headers', accessControlRequestHeaders);
-      accessControlRequestMethod && res.header('access-control-allow-methods', accessControlRequestMethod || 'GET');
-    }
-
-    next();
+  server.listen(process.env.port || process.env.PORT || 3978, () => {
+    console.log(`\n${server.name} listening to ${server.url}`);
+    console.log('\nGet Bot Framework Emulator: https://aka.ms/botframework-emulator');
+    console.log('\nTo talk to your bot, open the emulator select "Open Bot"');
   });
 
-  server.get('/', async (_, res) => {
-    const message = `WaterBottle is up since ${ prettyMs(Date.now() - up) } ago.`;
-    const separator = new Array(message.length).fill('-').join('');
+  // Create adapter.
+  const adapter = await createBotFrameworkAdapter();
 
-    res.set('Content-Type', 'text/plain');
-    res.send(JSON.stringify({
-      human: [
-        separator,
-        message,
-        separator
-      ],
-      computer: {
-        dependencies: packageJSON.dependencies,
-        streamingExtensionsType,
-        up
-      }
-    }, null, 2));
-  });
+  // Create the main dialog.
+  const bot = new EchoBot();
 
-  server.get('/health.txt', async (_, res) => {
-    res.set('Content-Type', 'text/plain');
-    res.send('OK');
-  });
+  setupAPI(server, { adapter, bot });
 
-  server.get('/ready.txt', async (_, res) => {
-    res.set('Content-Type', 'text/plain');
-    res.send('OK');
-  });
-
-  server.get('/token/directline', async (_, res) => {
-    try {
-      res.json(await generateDirectLineToken(DIRECT_LINE_TOKEN));
-    } catch ({ message }) {
-      res.status(500);
-      res.json({ message });
-    }
-  });
-
-  server.get('/token/directlinespeech', async (req, res) => {
-    try {
-      res.json(await generateDirectLineToken(DIRECT_LINE_SPEECH_TOKEN));
-    } catch ({ message }) {
-      res.status(500);
-      res.json({ message });
-    }
-  });
-
-  server.get('/token/directlinestreamingextensions', async (_, res) => {
-    if (WEBSITE_HOSTNAME) {
-      try {
-        res.json(await generateDirectLineToken(DIRECT_LINE_TOKEN, `https://${ WEBSITE_HOSTNAME }/.bot/v3/directline`));
-      } catch ({ message }) {
-        res.status(500);
-        res.json({ message });
-      }
-    } else {
-      res.status(500);
-      res.json({ message: 'Please specify WEBSITE_HOSTNAME environment variable.' });
-    }
-  });
-
-  server.get('/token/speechservices', async (req, res) => {
-    try {
-      res.json(await generateSpeechServicesToken());
-    } catch ({ message }) {
-      res.status(500);
-      res.json({ message });
-    }
-  });
-
-  server.opts('/public/**/*', (req, res) => {
-    const accessControlRequestHeaders = req.header('access-control-request-headers');
-    const accessControlRequestMethods = (req.header('access-control-request-method') || '').split(/[,\s]/iu).filter(s => s.trim());
-    const origin = req.header('origin');
-
-    if (~accessControlRequestMethods.indexOf('GET')) {
-      accessControlRequestHeaders && res.header('access-control-allow-headers', accessControlRequestHeaders);
-      res.header('access-control-allow-origin', origin || '*');
-      res.header('access-control-allow-methods', 'GET');
-      res.end();
-    } else {
-      res.statusCode(403);
-      res.end();
-    }
-  });
-
-  server.get('/kill', () => {
-    console.log(`GET /kill, exiting`);
-    process.exit(0);
-  });
-
-  server.get('/public/**/*', restify.plugins.serveStaticFiles(join(__dirname, '../public')));
-
-  const bot = new Bot();
-  const adapter = new BotFrameworkAdapter(ADAPTER_SETTINGS);
-  // const streamingAdapter = new BotFrameworkStreamingAdapter(bot);
-
-  server.post('/api/messages', (req, res) => {
-    adapter.processActivity(req, res, context => bot.run(context));
-  });
-
-  // This endpoint is for Direct Line Speech channel
-  server.get('/api/messages', (req, res) => {
-    console.log(`GET /api/messages(isUpgradeRequest=${ req.isUpgradeRequest() })`);
-
-    // if (req.isUpgradeRequest()) {
-    //   adapter.useWebSocket(req, res, bot);
-    // }
-
-    adapter.processActivity(req, res, context => bot.run(context));
-  });
-
-  // Checks if running under Azure
-  if (DIRECT_LINE_EXTENSION_KEY) {
-    console.log('Running with streaming extension running via Direct Line ASE.');
-    await adapter.useNamedPipe(undefined, bot);
-    streamingExtensionsType = 'named pipe';
-  } else {
-    console.log('Running with streaming extension running via proxy.');
-    connectAdapterToProxy(adapter);
-    streamingExtensionsType = 'web socket to proxy';
-  }
-
-  server.listen(PORT, () => console.log(`${ server.name } now listening to port ${ PORT }`));
+  // Enable Direct Line App Service Extension
+  // See https://docs.microsoft.com/en-us/azure/bot-service/bot-service-channel-directline-extension-node-bot?view=azure-bot-service-4.0
+  adapter.useNamedPipe(context => bot.run(context), `${process.env.APPSETTING_WEBSITE_SITE_NAME}.directline`);
 }
 
-main().catch(err => console.log(err));
+main();
