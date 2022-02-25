@@ -77,9 +77,9 @@ jobs:
       - name: Ping healthy
         timeout-minutes: 1
         run: |
-          bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' ${{ steps.deploy.outputs.webapp-url }}/health.txt)" != "200" ]]; do sleep 5; done' || false
+          bash -c 'while [[ "`curl -s -o /dev/null -w ''%{http_code}'' ${{ steps.deploy.outputs.webapp-url }}/health.txt`" != "200" ]]; do sleep 5; done' || false
 
       - name: Ping ready
         timeout-minutes: 1
         run: |
-          bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' ${{ steps.deploy.outputs.webapp-url }}/ready.txt)" != "200" ]]; do sleep 5; done' || false
+          bash -c 'while [[ "`curl -s -o /dev/null -w ''%{http_code}'' ${{ steps.deploy.outputs.webapp-url }}/ready.txt`" != "200" ]]; do sleep 5; done' || false
