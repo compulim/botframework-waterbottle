@@ -64,12 +64,22 @@ jobs:
         uses: azure/webapps-deploy@v1
         with:
           slot-name: production
-          publish-profile: ${{ secrets.PUBLISH_PROFILE }}
+          publish-profile: ${{ secrets.PUBLISH_PROFILE_DLSPEECH_MOCKBOT }}
           package: zipdeploy.zip
 
-      - name: Ping deployment
-        # We need to sleep because Azure Web Apps need time to pick up changes
+      # - name: Ping deployment
+      #   # We need to sleep because Azure Web Apps need time to pick up changes
+      #   run: |
+      #     sleep 5
+      #     curl -s ${{ steps.deploy.outputs.webapp-url }}/health.txt
+      #     curl -s ${{ steps.deploy.outputs.webapp-url }}/ready.txt
+
+      - name: Ping healthy
+        timeout-minutes: 1
         run: |
-          sleep 5
-          curl -s ${{ steps.deploy.outputs.webapp-url }}/health.txt
-          curl -s ${{ steps.deploy.outputs.webapp-url }}/ready.txt
+          bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' ${{ steps.deploy.outputs.webapp-url }}/health.txt)" != "200" ]]; do sleep 5; done' || false
+
+      - name: Ping ready
+        timeout-minutes: 1
+        run: |
+          bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' ${{ steps.deploy.outputs.webapp-url }}/ready.txt)" != "200" ]]; do sleep 5; done' || false
