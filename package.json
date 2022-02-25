@@ -25,25 +25,24 @@
     "url": "https://github.com"
   },
   "dependencies": {
-    "botbuilder": "~4.8.0",
-    "dotenv": "^8.2.0",
-    "math-random": "^1.0.4",
-    "node-fetch": "^2.6.0",
-    "pretty-ms": "^7.0.0",
-    "restify": "~8.4.0"
+    "botbuilder": "^4.15.0",
+    "dotenv": "^16.0.0",
+    "math-random": "^2.0.1",
+    "node-fetch": "^2.6.7",
+    "pretty-ms": "^7.0.1",
+    "restify": "^8.6.1"
   },
   "devDependencies": {
-    "@babel/cli": "^7.8.4",
-    "@babel/core": "^7.9.6",
-    "@babel/plugin-proposal-object-rest-spread": "^7.9.6",
-    "@babel/preset-env": "^7.9.6",
-    "concurrently": "^5.2.0",
-    "eslint": "^6.6.0",
-    "eslint-config-standard": "^14.1.0",
-    "eslint-plugin-import": "^2.18.2",
-    "eslint-plugin-node": "^10.0.0",
-    "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-standard": "^4.0.1",
-    "node-dev": "^4.0.0"
+    "@babel/cli": "^7.17.6",
+    "@babel/core": "^7.17.5",
+    "@babel/preset-env": "^7.16.11",
+    "concurrently": "^7.0.0",
+    "eslint": "^8.9.0",
+    "eslint-config-standard": "^16.0.3",
+    "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.0.0",
+    "eslint-plugin-standard": "^5.0.0",
+    "node-dev": "^7.1.0"
   }
 }
