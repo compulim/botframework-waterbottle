@@ -1,3 +1,5 @@
+import fetch from 'node-fetch';
+
 import createUserId from './createUserId';
 
 export default async function (

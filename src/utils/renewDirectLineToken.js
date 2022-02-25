@@ -1,3 +1,5 @@
+import fetch from 'node-fetch';
+
 export default async function (
   token,
   { domain = process.env.DIRECT_LINE_URL || 'https://directline.botframework.com/' } = {}
