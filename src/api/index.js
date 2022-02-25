@@ -1,4 +1,3 @@
-import deprecating from './deprecating';
 import getBotFrameworkWebChatVersions from './versions/botFrameworkWebChat/get';
 import getDirectLineTokens from './directLine/tokens/get';
 import getHealth from './health/get';
@@ -16,7 +15,6 @@ import upgrade from './upgrade';
 export default async function index(server, options) {
   await Promise.all(
     [
-      deprecating,
       getBotFrameworkWebChatVersions,
       getDirectLineTokens,
       getHealth,
